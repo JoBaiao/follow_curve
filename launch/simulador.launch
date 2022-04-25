@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <node pkg = "turtlesim" type = "turtlesim_node" name = "tartaruga" >
+    </node>
+
+    <node pkg = "follow_curve" type = "simulador.py" name = "simulador" >
+    </node>
+
+</launch>
