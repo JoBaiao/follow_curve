@@ -10,15 +10,11 @@ import sys
 
 class TurtleBot:
     def __init__(self):
-        # Creates a node with name 'turtlebot_controller' and make sure it is a
-        # unique node (using anonymous=True).
-        rospy.init_node('turtlebot_controller', anonymous=True)
+        # Cria node, publisher e subscriber
+        rospy.init_node('turtlebot', anonymous=True)
 
-        # Publisher which will publish to the topic '/turtle1/cmd_vel'.
         self.velocity_publisher = rospy.Publisher('/turtle1/cmd_vel', Twist, queue_size=10)
 
-        # A subscriber to the topic '/turtle1/pose'. self.update_pose is called
-        # when a message of type Pose is received.
         self.pose_subscriber = rospy.Subscriber('/turtle1/pose', Pose, self.update_pose)
 
         self.pose = Pose()
@@ -51,9 +47,9 @@ class TurtleBot:
         N = [(p_star[0] - (self.pose.x + dxatual))/norma,(p_star[1] - (self.pose.y + dyatual))/norma] # Vetor normal
         
         if j == (len(C[1])-1):
-            T = [C[0][0] - C[0][j] , C[1][0] - C[1][j]] 
+            T = [C[0][0] - C[0][j] , C[1][0] - C[1][j]] # Caso especial
         else:
-            T = [C[0][j+1] - C[0][j] , C[1][j+1] - C[1][j]] # Caso especial
+            T = [C[0][j+1] - C[0][j] , C[1][j+1] - C[1][j]] 
 
         T = np.array(T)/norm(T) #Vetor tangencial
         
@@ -61,7 +57,7 @@ class TurtleBot:
 
 
     ###################################################################################################
-    # Composição Vetor Normal e Tangente
+    # Composição Vetor Normal e Tangente para Obter Velocidade Desejada no Estado
     def composicao_de_vetores (self,N,T,beta,dmin):
         
         G = (2/np.pi)*np.arctan(beta*dmin)
@@ -74,18 +70,18 @@ class TurtleBot:
     # Lei de Controle
     def control(self,C):
         
-        pmed = np.array([self.pose.x + 0.1 - 0.2*random(), self.pose.y + 0.1 - 0.2*random()])
+        pmed = np.array([self.pose.x + 0.1 - 0.2*random(), self.pose.y + 0.1 - 0.2*random()]) # Posição Medida (Simula Perturbações)
 
         deslocamento_atual = np.array([self.v*np.cos(self.pose.theta)*self.dt, self.v*np.sin(self.pose.theta)*self.dt])
         
         [N,T,dmin] = self.pontomaisprox(deslocamento_atual[0],deslocamento_atual[1],C)
         velocidade_desejada = self.composicao_de_vetores (N,T,self.beta,dmin)
-        
+
         [N,T,dmin] = self.pontomaisprox(deslocamento_atual[0],deslocamento_atual[1],C)
         velocidade_desejada_futura = self.composicao_de_vetores (N,T,self.beta,dmin)
-       
+
         derivada_velocidade = (velocidade_desejada_futura - velocidade_desejada)/self.dt
-       
+
         w_max = 1
         k = 2 
 
@@ -98,7 +94,6 @@ class TurtleBot:
         acc_desired = [derivada_velocidade[0]+controlador_prop[0],derivada_velocidade[1]+controlador_prop[1]]
 
 
-
         [a,w] = np.matmul(M/self.v, acc_desired)
         
         if w > w_max:
@@ -106,7 +101,7 @@ class TurtleBot:
         elif w < -w_max:
             w = -w_max
         
-        v = self.v + a*self.dt
+        v = self.v + a*self.dt # Método de Euler
         
 
 
